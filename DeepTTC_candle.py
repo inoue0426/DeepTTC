@@ -166,7 +166,13 @@ class DataLoader:
         if candle_data_dir is None:
             candle_data_dir = '.'
 
-        OUT_DIR = os.path.join(candle_data_dir, 'GDSC_data')
+        # OUT_DIR = os.path.join(candle_data_dir, 'GDSC_data')
+        # this evaluates to /candle_data_dir/GDSC_data
+        # print ('outdir before: {}'.format(OUT_DIR))
+        OUT_DIR = self.args.data_dir
+        print ('outdir after: {}'.format(OUT_DIR))
+        # print("IN _download_default_dataset")
+
         url_length = len(url.split('/'))-4
         if not os.path.isdir(OUT_DIR):
             os.mkdir(OUT_DIR)
@@ -183,8 +189,10 @@ class DataLoader:
 
             self._download_default_dataset(args.default_data_url)
 
-            obj = DataEncoding(args.vocab_dir, args.cancer_id,
-                               args.sample_id, args.target_id, args.drug_id)
+            #obj = DataEncoding(args.vocab_dir, args.cancer_id,
+            #                   args.sample_id, args.target_id, args.drug_id)
+            obj = DataEncoding(args.data_dir, args.cancer_id,
+                    args.sample_id, args.target_id, args.drug_id)
             train_drug, test_drug = obj.Getdata.ByCancer(random_seed=args.rng_seed)
 
             train_drug, train_rna, test_drug, test_rna = obj.encode(
