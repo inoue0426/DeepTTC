@@ -3,7 +3,7 @@ mode = 'run'
 model_name = 'deepttc'
 generate_input_data = True
 benchmark_result_dir = 'results'
-use_lincs = True
+use_lincs = False
 
 cancer_id = 'TCGA_DESC'
 drug_id = 'DRUG_ID'
@@ -16,7 +16,6 @@ predictions_output = 'output/results.tsv'
 default_data_url = 'https://ftp.mcs.anl.gov/pub/candle/public/improve/reproducability/DeepTTC/'
 benchmark_dir = '/root/git/ModelTesting/benchmark/IMP_data'
 output_dir = 'output'
-model_name = 'DeepTTC'
 rng_seed=1
 vocab_dir = 'GDSC_data'
 
@@ -31,7 +30,7 @@ transformer_attention_probs_dropout = 0.1
 transformer_hidden_dropout_rate = 0.1
 learning_rate = 1e-4
 
-batch_size = 8
+batch_size = 512
 epochs = 3
 
 input_dim_drug_classifier = 128

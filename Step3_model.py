@@ -25,7 +25,7 @@ from torch.utils import data
 import torch.nn.functional as F
 from torch.autograd import Variable
 from torch import dropout, nn
-#from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import SequentialSampler
 
 from prettytable import PrettyTable
@@ -33,8 +33,7 @@ from subword_nmt.apply_bpe import BPE
 from model_helper import Encoder_MultipleLayers, Embeddings
 from Step2_DataEncoding import DataEncoding
 import candle
-
-
+from sklearn.metrics import r2_score
 
 
 class data_process_loader(data.Dataset):
@@ -86,7 +85,7 @@ class transformer(nn.Sequential):
                                               transformer_num_attention_heads_drug,
                                               transformer_attention_probs_dropout,
                                               transformer_hidden_dropout_rate)
-        
+
         self.device = device
 
     def forward(self, v):
@@ -152,10 +151,11 @@ class Classifier(nn.Sequential):
 class DeepTTC:
     def __init__(self, modeldir, args):
         devices_list = os.getenv('CUDA_AVAILABLE_DEVICES')
-        #device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         if devices_list is None:
             devices_list = '0'
-        self.device = torch.device(f'cuda:{devices_list}' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device(
+            f'cuda:{devices_list}' if torch.cuda.is_available() else 'cpu')
 
         self.model_drug = transformer(args.input_dim_drug,
                                       args.transformer_emb_size_drug,
@@ -198,6 +198,7 @@ class DeepTTC:
             spearmanr(y_label, y_pred)[0], \
             spearmanr(y_label, y_pred)[1], \
             concordance_index(y_label, y_pred), \
+            r2_score(y_label, y_pred), \
             loss
 
     def train(self, train_drug, train_rna, val_drug, val_rna):
@@ -236,7 +237,7 @@ class DeepTTC:
         table = PrettyTable(valid_metric_header)
         def float2str(x): return '%0.4f' % x
         print('--- Go for Training ---')
-        #writer = SummaryWriter(self.modeldir, comment='Drug_Transformer_MLP')
+        # writer = SummaryWriter(self.modeldir, comment='Drug_Transformer_MLP')
         t_start = time.time()
         iteration_loss = 0
 
@@ -252,7 +253,7 @@ class DeepTTC:
         for epo in np.arange(initial_epoch, train_epoch):
             for i, (v_d, v_p, label) in enumerate(training_generator):
                 # print(v_d,v_p)
-                #v_d = v_d.float().to(self.device)
+                # v_d = v_d.float().to(self.device)
                 score = self.model(v_d, v_p)
                 label = Variable(torch.from_numpy(
                     np.array(label))).float().to(self.device)
@@ -261,7 +262,7 @@ class DeepTTC:
                 n = torch.squeeze(score, 1).float()
                 loss = loss_fct(n, label)
                 loss_history.append(loss.item())
-                #writer.add_scalar("Loss/train", loss.item(), iteration_loss)
+                # writer.add_scalar("Loss/train", loss.item(), iteration_loss)
                 iteration_loss += 1
 
                 opt.zero_grad()
@@ -281,10 +282,10 @@ class DeepTTC:
                 # regression: MSE, Pearson Correlation, with p-value, Concordance Index
                 y_true, y_pred, mse, rmse, \
                     pearson, p_val, \
-                    spearman, s_p_val, CI,\
+                    spearman, s_p_val, CI, r2,\
                     loss_val = self.test(validation_generator, self.model)
                 lst = ["epoch " + str(epo)] + list(map(float2str, [mse, rmse, pearson, p_val, spearman,
-                                                                   s_p_val, CI]))
+                                                                   s_p_val, CI, r2]))
                 valid_metric_record.append(lst)
                 print(f'Currenf MSE: {mse}')
                 if mse < max_MSE:
@@ -302,23 +303,27 @@ class DeepTTC:
                     scores['rmse'] = rmse
                     scores['pcc'] = pearson
                     scores['scc'] = spearman
+                    scores['r2'] = r2
+                    scores['best_epoch'] = epo
                     print(scores)
-            table.add_row(lst)
+            # table.add_row(lst)
 
         self.model = model_max
 
-        with open(self.record_file, 'w') as fp:
-            fp.write(table.get_string())
-        with open(self.pkl_file, 'wb') as pck:
-            pickle.dump(loss_history, pck)
+        # with open(self.record_file, 'w') as fp:
+        #    fp.write(table.get_string())
+        # with open(self.pkl_file, 'wb') as pck:
+        #    pickle.dump(loss_history, pck)
 
         print("\nIMPROVE_RESULT val_loss:\t{}\n".format(scores["val_loss"]))
         print("IMPROVE_RESULT pcc:\t{}\n".format(scores["pcc"]))
         print("IMPROVE_RESULT scc:\t{}\n".format(scores["scc"]))
         print("IMPROVE_RESULT rmse:\t{}\n".format(scores["rmse"]))
+        print("IMPROVE_RESULT r2:\t{}\n".format(scores["r2"]))
+        print("IMPROVE_RESULT best epoch:\t{}\n".format(scores["best_epoch"]))
 
-        with open(os.path.join(self.args.output_dir, "scores.json"), "w", encoding="utf-8") as f:
-            json.dump(scores, f, ensure_ascii=False, indent=4)
+        # with open(os.path.join(self.args.output_dir, "scores.json"), "w", encoding="utf-8") as f:
+        #    json.dump(scores, f, ensure_ascii=False, indent=4)
 
         print('--- Training Finished ---')
 
@@ -335,7 +340,7 @@ class DeepTTC:
                   'sampler': SequentialSampler(info)}
         generator = data.DataLoader(info, **params)
 
-        y_label, y_pred, mse, rmse, person, p_val, spearman, s_p_val, CI, loss_val = \
+        y_label, y_pred, mse, rmse, person, p_val, spearman, s_p_val, CI, r2, loss_val = \
             self.test(generator, self.model)
 
         return y_label, y_pred, mse, rmse, person, p_val, spearman, s_p_val, CI
@@ -386,14 +391,14 @@ class DeepTTC:
         response_data.columns = ['CancID', 'DrugID', 'Label']
         drug_data = pd.merge(response_data, drug_data,
                              on='DrugID', how='inner')
-        #drug_data['Label'] = response_data['AUC']
+        # drug_data['Label'] = response_data['AUC']
 
-        #response_data = response_data[['CancID', 'DrugID', response_metric]]
-        #response_data.columns = ['CancID', 'DrugID', 'Label']
-        #response_data = response_data[['CancID', 'DrugID']]
+        # response_data = response_data[['CancID', 'DrugID', response_metric]]
+        # response_data.columns = ['CancID', 'DrugID', 'Label']
+        # response_data = response_data[['CancID', 'DrugID']]
 
-        #rna_data = pd.merge(response_data, rna_data, on='CancID', how='inner')
-        #train_rnadata = train_rnadata.T
+        # rna_data = pd.merge(response_data, rna_data, on='CancID', how='inner')
+        # train_rnadata = train_rnadata.T
         drug_data.index = range(drug_data.shape[0])
         rna_data.index = range(rna_data.shape[0])
 
