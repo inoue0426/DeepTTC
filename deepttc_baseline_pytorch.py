@@ -182,7 +182,7 @@ class DataLoader:
 
             self._download_default_dataset(args.default_data_url)
 
-            obj = DataEncoding(args.vocab_dir, args.cancer_id,
+            obj = DataEncoding(args, args.vocab_dir, args.cancer_id,
                                args.sample_id, args.target_id, args.drug_id)
             train_drug, test_drug = obj.Getdata.ByCancer(random_seed=args.rng_seed)
 
@@ -221,11 +221,11 @@ def initialize_parameters(default_model='DeepTTC.default'):
     relative_paths = ['vocab_dir', 
                       'output_dir']
 
-    for path in relative_paths:
-        gParameters[path] = os.path.join(candle_data_dir, gParameters[path])
 
     if 'data_dir' not in gParameters:
         gParameters['data_dir'] = candle_data_dir
+    for path in relative_paths:
+        gParameters[path] = os.path.join(gParameters['data_dir'], gParameters[path])
     dirs_to_check = ['results', gParameters['output_dir'], gParameters['data_dir']]
     for directory in dirs_to_check:
         path = os.path.join(candle_data_dir, directory)
