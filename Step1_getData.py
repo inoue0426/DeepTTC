@@ -24,13 +24,11 @@ import zipfile
 
 
 class GetData():
-    def __init__(self, args, cancer_id, sample_id, target_id, drug_id, generate_smiles=True):
-        #candle_data_dir = os.getenv('CANDLE_DATA_DIR')
-        #if candle_data_dir is None:
-        #    candle_data_dir = '.'
-        #PATH = os.path.join(candle_data_dir, 'GDSC_data')
-        PATH = os.path.join(args.data_dir, 'GDSC_data')
+    def __init__(self, cancer_id, sample_id, target_id, drug_id, 
+            generate_smiles=True, path='/candle_data_dir/DeepTTC/Data'):
 
+        #PATH = './GDSC_data'
+        PATH = path
         rnafile = PATH + '/Cell_line_RMA_proc_basalExp.txt'
         smilefile = PATH + '/smile_inchi.csv'
         pairfile = PATH + '/GDSC2_fitted_dose_response_25Feb20.xlsx'

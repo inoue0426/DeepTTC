@@ -15,7 +15,8 @@ predictions_output = 'output/results.tsv'
 
 default_data_url = 'https://ftp.mcs.anl.gov/pub/candle/public/improve/reproducability/DeepTTC/'
 benchmark_dir = '/root/git/ModelTesting/benchmark/IMP_data'
-output_dir = 'output'
+# output_dir = 'Model_80'
+model_name = 'DeepTTC'
 rng_seed=1
 vocab_dir = 'GDSC_data'
 

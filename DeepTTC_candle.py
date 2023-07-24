@@ -1,7 +1,7 @@
 import os
+import wget
 import torch
 import candle
-from candle.file_utils import get_file
 import subprocess
 from Step3_model import *
 from Step2_DataEncoding import DataEncoding
@@ -59,6 +59,26 @@ additional_definitions = [
         "name": "target_id",
         "type": str,
         "help": "Column name for target",
+    },
+    {
+        "name": "train_data_drug",
+        "type": str,
+        "help": "Drug data for training",
+    },
+    {
+        "name": "test_data_drug",
+        "type": str,
+        "help": "Drug data for testing",
+    },
+    {
+        "name": "train_data_rna",
+        "type": str,
+        "help": "RNA data for training",
+    },
+    {
+        "name": "test_data_rna",
+        "type": str,
+        "help": "RNA data for testing",
     },
     {
         "name": "vocab_dir",
@@ -135,30 +155,17 @@ class DataLoader:
 
     def save_data(self, train_drug, test_drug, train_rna, test_rna):
         args = self.args
-
         pickle.dump(train_drug, open(args.train_data_drug, 'wb'), protocol=4)
         pickle.dump(test_drug, open(args.test_data_drug, 'wb'), protocol=4)
         pickle.dump(train_rna, open(args.train_data_rna, 'wb'), protocol=4)
         pickle.dump(test_rna, open(args.test_data_rna, 'wb'), protocol=4)
 
-        self.args = args
-
     def _download_default_dataset(self, default_data_url):
         url = default_data_url
-        #candle_data_dir = os.getenv("CANDLE_DATA_DIR")
-        #if candle_data_dir is None:
-        #    candle_data_dir = '.'
-        data_dir = self.args.data_dir
+        candle_data_dir = os.getenv("CANDLE_DATA_DIR")
+        if candle_data_dir is None:
+            candle_data_dir = '.'
 
-        #import shutil
-        #import pathlib
-        #cwd = os.path.dirname(os.path.abspath(__file__))
-        #shutil.copy(f'{cwd}/landmark_genes', data_dir)
-        
-        OUT_DIR = os.path.join(data_dir, 'GDSC_data')
-        #get_file(fname='DeepTTC_data.tar.gz', origin=url, unpack=True, data_dir=data_dir)
-
-<<<<<<< HEAD:DeepTTC_candle.py
         # OUT_DIR = os.path.join(candle_data_dir, 'GDSC_data')
         # this evaluates to /candle_data_dir/GDSC_data
         # print ('outdir before: {}'.format(OUT_DIR))
@@ -166,25 +173,15 @@ class DataLoader:
         print ('outdir after: {}'.format(OUT_DIR))
         # print("IN _download_default_dataset")
 
-=======
->>>>>>> develop:deepttc_baseline_pytorch.py
         url_length = len(url.split('/'))-4
         if not os.path.isdir(OUT_DIR):
             os.mkdir(OUT_DIR)
-        import wget
         subprocess.run(['wget', '--recursive', '--no-clobber', '-nH',
                    f'--cut-dirs={url_length}', '--no-parent', f'--directory-prefix={OUT_DIR}', f'{url}'])
-        wget.download(url, out=OUT_DIR)
+        # wget.download(url, out=OUT_DIR)
 
     def _process_data(self, args):
         train_drug = test_drug = train_rna = test_rna = None
-        
-        args.train_data_drug = os.path.join(args.data_dir, 'train_data_drug.pickle')
-        args.test_data_drug = os.path.join(args.data_dir, 'test_data_drug.pickle')
-        args.train_data_rna = os.path.join(args.data_dir, 'train_data_rna.pickle')
-        args.test_data_rna = os.path.join(args.data_dir, 'test_data_rna.pickle')
-
-        self.args = args
 
         if not os.path.exists(args.train_data_rna) or \
                 not os.path.exists(args.test_data_rna) or \
@@ -192,22 +189,15 @@ class DataLoader:
 
             self._download_default_dataset(args.default_data_url)
 
-<<<<<<< HEAD:DeepTTC_candle.py
             #obj = DataEncoding(args.vocab_dir, args.cancer_id,
             #                   args.sample_id, args.target_id, args.drug_id)
             obj = DataEncoding(args.data_dir, args.cancer_id,
                     args.sample_id, args.target_id, args.drug_id)
-=======
-            obj = DataEncoding(args, args.vocab_dir, args.cancer_id,
-                               args.sample_id, args.target_id, args.drug_id)
->>>>>>> develop:deepttc_baseline_pytorch.py
             train_drug, test_drug = obj.Getdata.ByCancer(random_seed=args.rng_seed)
 
             train_drug, train_rna, test_drug, test_rna = obj.encode(
                 traindata=train_drug,
-                testdata=test_drug,
-                args=args)
-
+                testdata=test_drug)
             print('Train Drug:')
             print(train_drug)
             print('Train RNA:')
@@ -225,8 +215,6 @@ class DataLoader:
 
 def initialize_parameters(default_model='DeepTTC.default'):
     # Build benchmark object
-    candle_data_dir = os.getenv("CANDLE_DATA_DIR")
-    #default_model = os.path.join(candle_data_dir, default_model)
     common = DeepTTCCandle(file_path,
                            default_model,
                            'torch',
@@ -234,22 +222,21 @@ def initialize_parameters(default_model='DeepTTC.default'):
                            desc='DeepTTC drug response prediction model')
 
     # Initialize parameters
+    candle_data_dir = os.getenv("CANDLE_DATA_DIR")
     gParameters = candle.finalize_parameters(common)
-    relative_paths = ['vocab_dir', 
+    relative_paths = ['train_data_rna', 'test_data_rna',
+                      'vocab_dir', 'train_data_drug', 'test_data_drug',
                       'output_dir']
 
-
-    if 'data_dir' not in gParameters:
-        gParameters['data_dir'] = candle_data_dir
     for path in relative_paths:
-        gParameters[path] = os.path.join(gParameters['data_dir'], gParameters[path])
-    dirs_to_check = ['results', gParameters['output_dir'], gParameters['data_dir']]
+        gParameters[path] = os.path.join(candle_data_dir, gParameters[path])
+
+    dirs_to_check = ['input', 'results']
     for directory in dirs_to_check:
         path = os.path.join(candle_data_dir, directory)
         if not os.path.exists(path):
             os.makedirs(path)
 
-    gParameters['candle_data_dir'] = candle_data_dir
     return gParameters
 
 
