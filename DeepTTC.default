@@ -1,8 +1,9 @@
 [Global_Params]
 mode = 'run'
+model_name = 'deepttc'
 generate_input_data = True
 benchmark_result_dir = 'results'
-use_lincs = True
+use_lincs = False
 
 cancer_id = 'TCGA_DESC'
 drug_id = 'DRUG_ID'
@@ -11,10 +12,6 @@ sample_id = 'COSMIC_ID'
 
 save_data = 'True'
 predictions_output = 'output/results.tsv'
-train_data_drug = 'input/train_data_drug.pickle'
-test_data_drug = 'input/test_data_drug.pickle'
-train_data_rna = 'input/train_data_rna.pickle'
-test_data_rna = 'input/test_data_rna.pickle'
 
 default_data_url = 'https://ftp.mcs.anl.gov/pub/candle/public/improve/reproducability/DeepTTC/'
 benchmark_dir = '/root/git/ModelTesting/benchmark/IMP_data'
@@ -32,8 +29,9 @@ transformer_intermediate_size_drug = 512
 transformer_num_attention_heads_drug = 8
 transformer_attention_probs_dropout = 0.1
 transformer_hidden_dropout_rate = 0.1
-learning_rate = 0.3
-batch_size = 8
+learning_rate = 1e-4
+
+batch_size = 512
 epochs = 3
 
 input_dim_drug_classifier = 128
