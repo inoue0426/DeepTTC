@@ -182,15 +182,9 @@ class DataLoader:
 
             self._download_default_dataset(args.default_data_url)
 
-<<<<<<< HEAD:DeepTTC_candle.py
-            #obj = DataEncoding(args.vocab_dir, args.cancer_id,
-            #                   args.sample_id, args.target_id, args.drug_id)
-            obj = DataEncoding(args.data_dir, args.cancer_id,
-                    args.sample_id, args.target_id, args.drug_id)
-=======
             obj = DataEncoding(args, args.vocab_dir, args.cancer_id,
                                args.sample_id, args.target_id, args.drug_id)
->>>>>>> develop:deepttc_baseline_pytorch.py
+                    
             train_drug, test_drug = obj.Getdata.ByCancer(random_seed=args.rng_seed)
 
             train_drug, train_rna, test_drug, test_rna = obj.encode(
