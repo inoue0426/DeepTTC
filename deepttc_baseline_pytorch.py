@@ -158,16 +158,6 @@ class DataLoader:
         OUT_DIR = os.path.join(data_dir, 'GDSC_data')
         #get_file(fname='DeepTTC_data.tar.gz', origin=url, unpack=True, data_dir=data_dir)
 
-<<<<<<< HEAD:DeepTTC_candle.py
-        # OUT_DIR = os.path.join(candle_data_dir, 'GDSC_data')
-        # this evaluates to /candle_data_dir/GDSC_data
-        # print ('outdir before: {}'.format(OUT_DIR))
-        OUT_DIR = self.args.data_dir
-        print ('outdir after: {}'.format(OUT_DIR))
-        # print("IN _download_default_dataset")
-
-=======
->>>>>>> develop:deepttc_baseline_pytorch.py
         url_length = len(url.split('/'))-4
         if not os.path.isdir(OUT_DIR):
             os.mkdir(OUT_DIR)
