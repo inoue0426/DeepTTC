@@ -316,11 +316,11 @@ class DeepTTC:
         #    pickle.dump(loss_history, pck)
 
         print("\nIMPROVE_RESULT val_loss:\t{}\n".format(scores["val_loss"]))
-        print("IMPROVE_RESULT pcc:\t{}\n".format(scores["pcc"]))
-        print("IMPROVE_RESULT scc:\t{}\n".format(scores["scc"]))
-        print("IMPROVE_RESULT rmse:\t{}\n".format(scores["rmse"]))
-        print("IMPROVE_RESULT r2:\t{}\n".format(scores["r2"]))
-        print("IMPROVE_RESULT best epoch:\t{}\n".format(scores["best_epoch"]))
+        #print("IMPROVE_RESULT pcc:\t{}\n".format(scores["pcc"]))
+        #print("IMPROVE_RESULT scc:\t{}\n".format(scores["scc"]))
+        #print("IMPROVE_RESULT rmse:\t{}\n".format(scores["rmse"]))
+        #print("IMPROVE_RESULT r2:\t{}\n".format(scores["r2"]))
+        #print("IMPROVE_RESULT best epoch:\t{}\n".format(scores["best_epoch"]))
 
         # with open(os.path.join(self.args.output_dir, "scores.json"), "w", encoding="utf-8") as f:
         #    json.dump(scores, f, ensure_ascii=False, indent=4)
