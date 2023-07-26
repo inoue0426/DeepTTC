@@ -24,7 +24,7 @@ import zipfile
 
 
 class GetData():
-    def __init__(self, cancer_id, sample_id, target_id, drug_id, 
+    def __init__(self, args, cancer_id, sample_id, target_id, drug_id, 
             generate_smiles=True):
 
         #PATH = './GDSC_data'
