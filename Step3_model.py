@@ -299,7 +299,7 @@ class DeepTTC:
                           ' Spearman Correlation: ' + str(spearman)[:7] +
                           ' with p_value: ' + str(s_p_val)[:7] +
                           ' , Concordance Index: ' + str(CI)[:7])
-                    scores['val_loss'] = loss_val.item()
+                    scores['val_loss'] = mse #loss_val.item()
                     scores['rmse'] = rmse
                     scores['pcc'] = pearson
                     scores['scc'] = spearman
