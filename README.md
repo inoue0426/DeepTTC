@@ -11,15 +11,35 @@ DeepTTC is an end-to-end deep learning model to predict the anti-cancer drug res
 
 ## Installation steps
 
-1. Build Singularity image
+### Common steps
+
+Define CANDLE_DATA_DIR environmental variable:
+
+        export CANDLE_DATA_DIR=/*your_folder*/
+
+Data download and processing will use this directory.
+
+### Standalone setup
+
+Install requirements:
+
+        pip install requirements.txt
+
+### Singularity container
+
+1. Get the latest DeepTTC definition file from Singularithy repository of the IMPROVE project:
+
+https://github.com/JDACS4C-IMPROVE/Singularity/tree/develop/definitions
+
+2. Build Singularity image
                   
         ./build.sh DeepTTC.build
         
-2. Run Singularity image
+3. Run Singularity image
 
         ./run.sh writable/DeepTTC_YYYY_MM_DD
 
-3. Navigate to DeepTTC folder
+4. Navigate to DeepTTC folder
 
         cd $PATH_TO_WRITABLE$/DeepTTC_YYYY_MM_DD/DeepTTC/
 
