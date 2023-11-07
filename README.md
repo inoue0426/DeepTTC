@@ -25,6 +25,10 @@ Install requirements:
 
         pip install -r requirements.txt
 
+Setup CANDLE package:
+
+        pip install git+https://github.com/ECP-CANDLE/candle_lib@develop
+
 ### Singularity container
 
 1. Get the latest DeepTTC definition file from Singularithy repository of the IMPROVE project:
