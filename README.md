@@ -23,7 +23,7 @@ Data download and processing will use this directory.
 
 Install requirements:
 
-        pip install requirements.txt
+        pip install -r requirements.txt
 
 ### Singularity container
 
