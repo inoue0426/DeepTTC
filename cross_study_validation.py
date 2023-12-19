@@ -68,8 +68,9 @@ def prepare_dataframe(gene_expression, smiles, responses, model):
     gene_expression, drug_data = model.preprocess(
         gene_expression, smiles, responses, 'AUC')
     drug_data = drug_data.drop(['index'], axis=1)
-    drug_columns = [x for x in drug_data.columns if x not in ['CancID', 'DrugID']]
-    #data = pd.merge(gene_expression, drug_data, on='DrugID', how='inner')
+    drug_columns = [
+        x for x in drug_data.columns if x not in ['CancID', 'DrugID']]
+    # data = pd.merge(gene_expression, drug_data, on='DrugID', how='inner')
     data = pd.merge(gene_expression, drug_data, on='CancID', how='inner')
     gene_expression = gene_expression.drop(['CancID'], axis=1)
     gene_expression_columns = gene_expression.columns
@@ -117,9 +118,12 @@ def run_cross_study_analysis(model, data_dir, results_dir, n_splits=10, use_linc
             print("Test ", test_data.shape)
 
             scaler = StandardScaler()
-            train_data_gene_expression_scaled = pd.DataFrame(scaler.fit_transform(train_data[gene_expression_columns]))
-            validation_data_gene_expression_scaled = pd.DataFrame(scaler.transform(validation_data[gene_expression_columns]))
-            test_data_gene_expression_scaled = pd.DataFrame(scaler.transform(test_data[gene_expression_columns]))
+            train_data_gene_expression_scaled = pd.DataFrame(
+                scaler.fit_transform(train_data[gene_expression_columns]))
+            validation_data_gene_expression_scaled = pd.DataFrame(
+                scaler.transform(validation_data[gene_expression_columns]))
+            test_data_gene_expression_scaled = pd.DataFrame(
+                scaler.transform(test_data[gene_expression_columns]))
 
             # Scale
             # Train model
@@ -152,11 +156,12 @@ def run_cross_study_analysis(model, data_dir, results_dir, n_splits=10, use_linc
             print(np.shape(result_df))
             print(np.shape(y_true))
             print(result_df)
-            #result_df = pd.DataFrame.from_dict(result)
-            result_df.to_csv(f'{results_dir}/{src}_{src}_split_{split_id}.csv', sep=',', index=None)
+            # result_df = pd.DataFrame.from_dict(result)
+            result_df.to_csv(
+                f'{results_dir}/{src}_{src}_split_{split_id}.csv', sep=',', index=None)
             pickle.dump(result, open(
                 f'{results_dir}/predictions_{src}_cv_split_{split_id}.pickle', 'wb'))
-            #pickle.dump(scores, open(
+            # pickle.dump(scores, open(
             #    f'{results_dir}/scores_{src}_cv_split_{split_id}.pickle', 'wb'))
 
             # Test on unrelated datasets
@@ -169,23 +174,25 @@ def run_cross_study_analysis(model, data_dir, results_dir, n_splits=10, use_linc
                 test_src_data, test_gene_expression_columns, test_drug_columns = prepare_dataframe(
                     test_gene_expression, test_smiles, test_responses, model)
                 # Subsetting to the current set of expressed genes!!!
-                test_src_data_gene_expression_scaled = pd.DataFrame(scaler.transform(test_src_data[gene_expression_columns]))
+                test_src_data_gene_expression_scaled = pd.DataFrame(
+                    scaler.transform(test_src_data[gene_expression_columns]))
                 _, y_pred, _, _, _, _, _, _, _ = model.predict(
                     test_src_data[test_drug_columns], test_src_data_gene_expression_scaled)
                 y_true = test_src_data['Label']
                 test_cancid = test_src_data['CancID']
                 test_drugid = test_src_data['DrugID']
 
-                #print(f'{src} on {test_src} y_true: ')
+                # print(f'{src} on {test_src} y_true: ')
 
                 result = {'CancID': test_cancid,
                           'DrugID': test_drugid,
                           'y_true': y_true,
                           'y_pred': y_pred}
                 result_df = pd.DataFrame.from_dict(result)
-                result_df.to_csv(f'{results_dir}/{src}_{test_src}_split_{split_id}.csv', sep=',', index=None)
+                result_df.to_csv(
+                    f'{results_dir}/{src}_{test_src}_split_{split_id}.csv', sep=',', index=None)
                 scores = score(y_pred, y_true)
-                #pickle.dump(result, open(
+                # pickle.dump(result, open(
                 #    f'{results_dir}/predictions_{src}_split_{split_id}_on_{test_src}.pickle', 'wb'))
                 pickle.dump(scores, open(
                     f'{results_dir}/scores_{src}_split_{split_id}_on_{test_src}.pickle', 'wb'))

@@ -13,11 +13,12 @@ sample_id = 'COSMIC_ID'
 save_data = 'True'
 predictions_output = 'output/results.tsv'
 
+
 default_data_url = 'https://ftp.mcs.anl.gov/pub/candle/public/improve/reproducability/DeepTTC/'
 benchmark_dir = '../IMP_data'
 # output_dir = 'Model_80'
 rng_seed=1
-vocab_dir = 'GDSC_data'
+vocab_dir = '.'
 
 
 input_dim_drug = 2586
@@ -31,7 +32,46 @@ transformer_hidden_dropout_rate = 0.1
 learning_rate = 1e-4
 
 batch_size = 512
-epochs = 3
+gene_dim = 30805
 
 input_dim_drug_classifier = 128
 input_dim_gene_classifier = 256
+
+test_data_processed ="test.pickle"
+train_data_processed = "train.pickle"
+val_data_processed = "val.pickle"
+
+[Preprocess]
+train_split_file = "GDSCv1_split_0_train.txt"
+val_split_file = "GDSCv1_split_0_val.txt"
+test_split_file = "GDSCv1_split_0_test.txt"
+ml_data_outdir = "./ml_data/GDSCv1-GDSCv1/split_0"
+y_data_files = [["response.tsv"]]
+x_data_canc_files = [["cancer_gene_expression.tsv", ["Gene_Symbol"]]]
+x_data_drug_files = [["drug_SMILES.tsv"]]
+use_lincs = True
+gene_system_identifier = ["Gene_Symbol"]
+scaling = "std"
+
+[Train]
+train_ml_data_dir = "./ml_data/GDSCv1-GDSCv1/split_0"
+val_ml_data_dir = "./ml_data/GDSCv1-GDSCv1/split_0"
+model_outdir = "./out_models/GDSCv1/split_0"
+model_file_name = "model"
+model_file_format = ".pt"
+epochs = 10
+batch_size = 256
+val_batch = 256
+loss = "mse"
+early_stop_metric = "mse"
+patience = 20
+ckpt_save_interval = 5
+log_interval = 20
+cuda_name = "cuda:7"
+
+[Infer]
+test_ml_data_dir = "./ml_data/GDSCv1-GDSCv1/split_0"
+model_dir = "./out_models/GDSCv1/split_0"
+infer_outdir = "./out_infer/GDSCv1-GDSCv1/split_0"
+test_batch = 256
+cuda_name = "cuda:7"

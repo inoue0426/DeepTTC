@@ -49,6 +49,15 @@ class DataEncoding:
 
         return i, np.asarray(input_mask)
 
+    def encode_smiles(self, drug_data):
+        drug_smiles = self.Getdata.getDrug()
+        drugid2smile = dict(
+            zip(drug_smiles['drug_id'], drug_smiles['CanonicalSMILES']))
+        smile_encode = pd.Series(drug_smiles['CanonicalSMILES'].unique()).apply(
+            self._drug2emb_encoder)
+        uniq_smile_dict = dict(
+            zip(drug_smiles['CanonicalSMILES'].unique(), smile_encode))
+
     def encode(self, traindata, testdata, args=None):
         drug_smiles = self.Getdata.getDrug()
         print(drug_smiles)
@@ -81,7 +90,6 @@ class DataEncoding:
         print(train_rnadata)
         print('TRAIN RNA DATA IDX')
         print(cols)
- 
 
         train_rnadata = train_rnadata.T
         train_rnadata.columns = cols
@@ -90,7 +98,6 @@ class DataEncoding:
 
         train_rnadata.index = range(train_rnadata.shape[0])
         test_rnadata.index = range(test_rnadata.shape[0])
-
 
         return traindata, train_rnadata, testdata, test_rnadata
 

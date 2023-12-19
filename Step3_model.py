@@ -171,7 +171,9 @@ class DeepTTC:
             self.modeldir, "valid_markdowntable.txt")
         self.pkl_file = os.path.join(self.modeldir, "loss_curve_iter.pkl")
         self.args = args
-        self.model = None
+        model_gene = MLP(input_dim=self.args.gene_dim, device=self.device)
+        self.model = Classifier(self.args, self.model_drug, model_gene)
+        # self.model = None
 
     def test(self, datagenerator, model):
         y_label = []
@@ -202,8 +204,6 @@ class DeepTTC:
             loss
 
     def train(self, train_drug, train_rna, val_drug, val_rna):
-        model_gene = MLP(input_dim=np.shape(train_rna)[1], device=self.device)
-        self.model = Classifier(self.args, self.model_drug, model_gene)
 
         lr = self.args.learning_rate
         decay = 0
@@ -276,13 +276,14 @@ class DeepTTC:
                           ' with loss ' + train_loss +
                           ". Total time " + str(int(t_now - t_start) / 3600)[:7] + " hours")
 
-            ckpt.ckpt_epoch(epo, float(train_loss))
+            # ckpt.ckpt_epoch(epo, float(train_loss))
+            ckpt.ckpt_epoch(int(epo), float(train_loss))
 
             with torch.set_grad_enabled(False):
                 # regression: MSE, Pearson Correlation, with p-value, Concordance Index
                 y_true, y_pred, mse, rmse, \
                     pearson, p_val, \
-                    spearman, s_p_val, CI, r2,\
+                    spearman, s_p_val, CI, r2, \
                     loss_val = self.test(validation_generator, self.model)
                 lst = ["epoch " + str(epo)] + list(map(float2str, [mse, rmse, pearson, p_val, spearman,
                                                                    s_p_val, CI, r2]))
@@ -299,7 +300,7 @@ class DeepTTC:
                           ' Spearman Correlation: ' + str(spearman)[:7] +
                           ' with p_value: ' + str(s_p_val)[:7] +
                           ' , Concordance Index: ' + str(CI)[:7])
-                    scores['val_loss'] = mse #loss_val.item()
+                    scores['val_loss'] = mse  # loss_val.item()
                     scores['rmse'] = rmse
                     scores['pcc'] = pearson
                     scores['scc'] = spearman
@@ -316,11 +317,11 @@ class DeepTTC:
         #    pickle.dump(loss_history, pck)
 
         print("\nIMPROVE_RESULT val_loss:\t{}\n".format(scores["val_loss"]))
-        #print("IMPROVE_RESULT pcc:\t{}\n".format(scores["pcc"]))
-        #print("IMPROVE_RESULT scc:\t{}\n".format(scores["scc"]))
-        #print("IMPROVE_RESULT rmse:\t{}\n".format(scores["rmse"]))
-        #print("IMPROVE_RESULT r2:\t{}\n".format(scores["r2"]))
-        #print("IMPROVE_RESULT best epoch:\t{}\n".format(scores["best_epoch"]))
+        # print("IMPROVE_RESULT pcc:\t{}\n".format(scores["pcc"]))
+        # print("IMPROVE_RESULT scc:\t{}\n".format(scores["scc"]))
+        # print("IMPROVE_RESULT rmse:\t{}\n".format(scores["rmse"]))
+        # print("IMPROVE_RESULT r2:\t{}\n".format(scores["r2"]))
+        # print("IMPROVE_RESULT best epoch:\t{}\n".format(scores["best_epoch"]))
 
         # with open(os.path.join(self.args.output_dir, "scores.json"), "w", encoding="utf-8") as f:
         #    json.dump(scores, f, ensure_ascii=False, indent=4)
@@ -345,14 +346,14 @@ class DeepTTC:
 
         return y_label, y_pred, mse, rmse, person, p_val, spearman, s_p_val, CI
 
-    def save_model(self):
-        torch.save(self.model.state_dict(), self.modeldir + '/model.pt')
+    def save_model(self, model_path):
+        torch.save(self.model.state_dict(), model_path)
 
     def load_pretrained(self, path):
         if not os.path.exists(path):
             os.makedirs(path)
 
-        if self.device == 'cuda':
+        if self.device.type == 'cuda':
             state_dict = torch.load(path)
         else:
             state_dict = torch.load(path, map_location=torch.device('cpu'))
