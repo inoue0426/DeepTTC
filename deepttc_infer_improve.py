@@ -29,7 +29,7 @@ from DeepTTC_candle import *
 
 # [Req] Imports from preprocess and train scripts
 from deepttc_preprocess_improve import preprocess_params
-from deepttc_train_improve import metrics_list
+from deepttc_train_improve import metrics_list, train_params
 
 filepath = Path(__file__).resolve().parent  # [Req]
 
@@ -169,7 +169,7 @@ def run(params):
 # [Req]
 def main(args):
     # [Req]
-    additional_definitions = preprocess_params + infer_params
+    additional_definitions = preprocess_params + infer_params + train_params
     params = frm.initialize_parameters(
         filepath,
         # default_model="graphdrp_default_model.txt",
