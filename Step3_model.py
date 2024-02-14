@@ -241,16 +241,24 @@ class DeepTTC:
         t_start = time.time()
         iteration_loss = 0
 
+        initial_epoch = 0
+        checkpointing = """
         ckpt = candle.CandleCkptPyTorch(vars(self.args))
         ckpt.set_model({"model": self.model, "optimizer": opt})
+        ckpt.ckpt_epoch(epo, float(train_loss))
         J = ckpt.restart(self.model)
-        initial_epoch = 0
         if J is not None:
             initial_epoch = J["epoch"]
             print("restarting from ckpt: initial_epoch: %i" % initial_epoch)
+        #"""
 
+        max_iterations_without_improvement = 10
+        early_stop_counter = 0
         train_loss = None
         for epo in np.arange(initial_epoch, train_epoch):
+            if early_stop_counter >= max_iterations_without_improvement:
+                break
+
             for i, (v_d, v_p, label) in enumerate(training_generator):
                 # print(v_d,v_p)
                 # v_d = v_d.float().to(self.device)
@@ -277,7 +285,7 @@ class DeepTTC:
                           ". Total time " + str(int(t_now - t_start) / 3600)[:7] + " hours")
 
             # ckpt.ckpt_epoch(epo, float(train_loss))
-            ckpt.ckpt_epoch(int(epo), float(train_loss))
+            # ckpt.ckpt_epoch(int(epo), float(train_loss))
 
             with torch.set_grad_enabled(False):
                 # regression: MSE, Pearson Correlation, with p-value, Concordance Index
@@ -290,6 +298,7 @@ class DeepTTC:
                 valid_metric_record.append(lst)
                 print(f'Currenf MSE: {mse}')
                 if mse < max_MSE:
+                    early_stop_counter = 0
                     model_max = copy.deepcopy(self.model)
                     max_MSE = mse
                     print('Validation at Epoch ' + str(epo + 1) +
@@ -307,6 +316,8 @@ class DeepTTC:
                     scores['r2'] = r2
                     scores['best_epoch'] = epo
                     print(scores)
+                else:
+                    early_stop_counter += 1
             # table.add_row(lst)
 
         self.model = model_max
@@ -327,6 +338,7 @@ class DeepTTC:
         #    json.dump(scores, f, ensure_ascii=False, indent=4)
 
         print('--- Training Finished ---')
+        return self
 
     def predict(self, drug_data, rna_data):
         print('predicting...')
@@ -429,7 +441,7 @@ if __name__ == '__main__':
         os.mkdir(modeldir)
 
     net = DeepTTC(modeldir=modeldir)
-    net.train(train_drug=traindata, train_rna=train_rnadata,
-              val_drug=testdata, val_rna=test_rnadata)
+    net = net.train(train_drug=traindata, train_rna=train_rnadata,
+                    val_drug=testdata, val_rna=test_rnadata)
     net.save_model()
     print("Model Saved :{}".format(modelfile))

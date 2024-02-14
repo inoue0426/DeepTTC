@@ -1,7 +1,7 @@
 import os
 import json
 import candle
-import pickle
+# import pickle
 import pandas as pd
 from pathlib import Path
 from DeepTTC_candle import get_model
@@ -86,12 +86,18 @@ def run(params):
     """
     model_dir = Path(params["model_outdir"])
     data_dir = Path(params["train_ml_data_dir"])
-    train_data_path = data_dir/'train.pickle'
-    val_data_path = data_dir/'val.pickle'
-    # test_data_path = model_dir/'test.pickle'
+    train_data_path = data_dir/'train.h5'
+    val_data_path = data_dir/'val.h5'
+    # test_data_path = model_dir/'test.h5'
 
-    train_data = pickle.load(open(train_data_path, 'rb'))
-    val_data = pickle.load(open(val_data_path, 'rb'))
+    train_data = {}
+    train_data['drug'] = pd.read_hdf(train_data_path, key='drug')
+    train_data['gene_expression'] = pd.read_hdf(
+        train_data_path, key='gene_expression')
+    val_data = {}
+    val_data['drug'] = pd.read_hdf(val_data_path, key='drug')
+    val_data['gene_expression'] = pd.read_hdf(
+        val_data_path, key='gene_expression')
     # test_data = pickle.load(open(test_data_path, 'rb'))
     args = candle.ArgumentStruct(**params)
     modeldir = args.output_dir
@@ -100,8 +106,8 @@ def run(params):
     if not os.path.exists(modeldir):
         os.mkdir(modeldir)
     model = get_model(args)
-    model.train(train_drug=train_data['drug'], train_rna=train_data['gene_expression'],
-                val_drug=val_data['drug'], val_rna=val_data['gene_expression'])
+    model = model.train(train_drug=train_data['drug'], train_rna=train_data['gene_expression'],
+                        val_drug=val_data['drug'], val_rna=val_data['gene_expression'])
     print(f'Saving model to {modelpath}')
 
     ############### HACK!!!! ################
@@ -109,7 +115,7 @@ def run(params):
     #########################################
     model.save_model(modelpath)
     # model.save_model(modelfile)
-    print("Model Saved :{}".format(modelfile))
+    print("Model Saved :{}".format(modelpath))
 
     y_label, y_pred, mse, rmse, person, p_val, spearman, s_p_val, CI = model.predict(
         val_data['drug'], val_data['gene_expression'])

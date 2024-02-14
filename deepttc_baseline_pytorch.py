@@ -128,9 +128,10 @@ class DataLoader:
 
     def __init__(self, args):
         self.args = args
-    
+
     def load_data(self):
-        train_drug, test_drug, train_rna, test_rna = self._process_data(self.args)
+        train_drug, test_drug, train_rna, test_rna = self._process_data(
+            self.args)
         return train_drug, test_drug, train_rna, test_rna
 
     def save_data(self, train_drug, test_drug, train_rna, test_rna):
@@ -145,34 +146,38 @@ class DataLoader:
 
     def _download_default_dataset(self, default_data_url):
         url = default_data_url
-        #candle_data_dir = os.getenv("CANDLE_DATA_DIR")
-        #if candle_data_dir is None:
+        # candle_data_dir = os.getenv("CANDLE_DATA_DIR")
+        # if candle_data_dir is None:
         #    candle_data_dir = '.'
         data_dir = self.args.data_dir
 
-        #import shutil
-        #import pathlib
-        #cwd = os.path.dirname(os.path.abspath(__file__))
-        #shutil.copy(f'{cwd}/landmark_genes', data_dir)
-        
+        # import shutil
+        # import pathlib
+        # cwd = os.path.dirname(os.path.abspath(__file__))
+        # shutil.copy(f'{cwd}/landmark_genes', data_dir)
+
         OUT_DIR = os.path.join(data_dir, 'GDSC_data')
-        #get_file(fname='DeepTTC_data.tar.gz', origin=url, unpack=True, data_dir=data_dir)
+        # get_file(fname='DeepTTC_data.tar.gz', origin=url, unpack=True, data_dir=data_dir)
 
         url_length = len(url.split('/'))-4
         if not os.path.isdir(OUT_DIR):
             os.mkdir(OUT_DIR)
         import wget
         subprocess.run(['wget', '--recursive', '--no-clobber', '-nH',
-                   f'--cut-dirs={url_length}', '--no-parent', f'--directory-prefix={OUT_DIR}', f'{url}'])
+                        f'--cut-dirs={url_length}', '--no-parent', f'--directory-prefix={OUT_DIR}', f'{url}'])
         wget.download(url, out=OUT_DIR)
 
     def _process_data(self, args):
         train_drug = test_drug = train_rna = test_rna = None
-        
-        args.train_data_drug = os.path.join(args.data_dir, 'train_data_drug.pickle')
-        args.test_data_drug = os.path.join(args.data_dir, 'test_data_drug.pickle')
-        args.train_data_rna = os.path.join(args.data_dir, 'train_data_rna.pickle')
-        args.test_data_rna = os.path.join(args.data_dir, 'test_data_rna.pickle')
+
+        args.train_data_drug = os.path.join(
+            args.data_dir, 'train_data_drug.pickle')
+        args.test_data_drug = os.path.join(
+            args.data_dir, 'test_data_drug.pickle')
+        args.train_data_rna = os.path.join(
+            args.data_dir, 'train_data_rna.pickle')
+        args.test_data_rna = os.path.join(
+            args.data_dir, 'test_data_rna.pickle')
 
         self.args = args
 
@@ -184,8 +189,9 @@ class DataLoader:
 
             obj = DataEncoding(args, args.vocab_dir, args.cancer_id,
                                args.sample_id, args.target_id, args.drug_id)
-                    
-            train_drug, test_drug = obj.Getdata.ByCancer(random_seed=args.rng_seed)
+
+            train_drug, test_drug = obj.Getdata.ByCancer(
+                random_seed=args.rng_seed)
 
             train_drug, train_rna, test_drug, test_rna = obj.encode(
                 traindata=train_drug,
@@ -210,7 +216,7 @@ class DataLoader:
 def initialize_parameters(default_model='DeepTTC.default'):
     # Build benchmark object
     candle_data_dir = os.getenv("CANDLE_DATA_DIR")
-    #default_model = os.path.join(candle_data_dir, default_model)
+    # default_model = os.path.join(candle_data_dir, default_model)
     common = DeepTTCCandle(file_path,
                            default_model,
                            'torch',
@@ -219,15 +225,16 @@ def initialize_parameters(default_model='DeepTTC.default'):
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(common)
-    relative_paths = ['vocab_dir', 
+    relative_paths = ['vocab_dir',
                       'output_dir']
-
 
     if 'data_dir' not in gParameters:
         gParameters['data_dir'] = candle_data_dir
     for path in relative_paths:
-        gParameters[path] = os.path.join(gParameters['data_dir'], gParameters[path])
-    dirs_to_check = ['results', gParameters['output_dir'], gParameters['data_dir']]
+        gParameters[path] = os.path.join(
+            gParameters['data_dir'], gParameters[path])
+    dirs_to_check = ['results', gParameters['output_dir'],
+                     gParameters['data_dir']]
     for directory in dirs_to_check:
         path = os.path.join(candle_data_dir, directory)
         if not os.path.exists(path):
@@ -250,8 +257,8 @@ def run(args):
     if not os.path.exists(modeldir):
         os.mkdir(modeldir)
     model = get_model(args)
-    model.train(train_drug=train_drug, train_rna=train_rna,
-                val_drug=test_drug, val_rna=test_rna)
+    model = model.train(train_drug=train_drug, train_rna=train_rna,
+                        val_drug=test_drug, val_rna=test_rna)
     model.save_model()
     print("Model Saved :{}".format(modelfile))
 

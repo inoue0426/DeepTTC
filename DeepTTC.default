@@ -3,7 +3,6 @@ mode = 'run'
 model_name = 'deepttc'
 generate_input_data = True
 benchmark_result_dir = 'results'
-use_lincs = False
 
 cancer_id = 'TCGA_DESC'
 drug_id = 'DRUG_ID'
@@ -49,7 +48,7 @@ ml_data_outdir = "./ml_data/GDSCv1-GDSCv1/split_0"
 y_data_files = [["response.tsv"]]
 x_data_canc_files = [["cancer_gene_expression.tsv", ["Gene_Symbol"]]]
 x_data_drug_files = [["drug_SMILES.tsv"]]
-use_lincs = True
+use_lincs = False
 gene_system_identifier = ["Gene_Symbol"]
 scaling = "std"
 
@@ -60,7 +59,7 @@ model_outdir = "./out_models/GDSCv1/split_0"
 model_file_name = "model"
 model_file_format = ".pt"
 epochs = 10
-batch_size = 256
+batch_size = 64
 val_batch = 256
 loss = "mse"
 early_stop_metric = "mse"

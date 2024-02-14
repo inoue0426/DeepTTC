@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """ Inference with GraphDRP for drug response prediction.
 
 Required outputs
@@ -20,7 +22,7 @@ from typing import Dict
 
 import os
 import torch
-import pickle
+# import pickle
 import pandas as pd
 
 # [Req] IMPROVE/CANDLE imports
@@ -90,17 +92,20 @@ def run(params):
     # print(f"test_batch: {params['test_batch']}")
 
     print(test_data_fname)
-    test_data_path = test_data_fname  # params['test_data_processed']
     test_ml_data_dir = params['test_ml_data_dir']
-    test_data = pickle.load(
-        open(f'{test_ml_data_dir}/test.pickle', 'rb'))
+    # params['test_data_processed']
+    test_data_path = f'{test_ml_data_dir}/test.h5'
+    test_data = {}
+    test_data['drug'] = pd.read_hdf(test_data_path, key='drug')
+    test_data['gene_expression'] = pd.read_hdf(
+        test_data_path, key='gene_expression')
 
     # ------------------------------------------------------
     # Load best model and compute predictions
     # ------------------------------------------------------
     # Load the best saved model (as determined based on val data)
     modelpath = frm.build_model_path(
-        params, model_dir=params["model_outdir"])  # [Req]
+        params, model_dir=params["model_dir"])  # [Req]
 
     def determine_device(cuda_name_from_params):
         """Determine device to run PyTorch functions.

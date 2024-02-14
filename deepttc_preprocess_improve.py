@@ -1,31 +1,29 @@
-import torch
-from torch_geometric import data as DATA
-from torch_geometric.data import InMemoryDataset
+#!/usr/bin/env python
 import subprocess
 import joblib
 import pandas as pd
 import numpy as np
 from typing import Dict
 from pathlib import Path
-import pickle
-import candle
+# import pickle
+
 import os
 import sys
 from Step2_DataEncoding import DataEncoding
-# import sys  # nopep8
-# sys.path.append("/opt/conda/lib/python3.7/")  # nopep8
-# sys.path.append("/opt/conda/lib/python3.7/site-packages")  # nopep8
-# sys.path.append("/opt/conda/lib/python3.7/site-packages/improve_lib")  # nopep8
-
-from improve import framework as frm
-from improve import drug_resp_pred as drp
 from sklearn.preprocessing import StandardScaler, MaxAbsScaler, MinMaxScaler, RobustScaler
 
+# [Req] IMPROVE/CANDLE imports
+import candle
+from improve import framework as frm
+from improve import drug_resp_pred as drp
 
-filepath = Path(__file__).resolve().parent
+
+filepath = Path(__file__).resolve().parent  # [Req]
 IMPROVE_DATA_DIR = Path(os.environ["IMPROVE_DATA_DIR"])
 
-
+# ---------------------
+# [Req] Parameter lists
+# ---------------------
 app_preproc_params = [
     {"name": "y_data_files",  # default
      "type": str,
@@ -75,17 +73,14 @@ model_preproc_params = [
      "type": str,
      "default": "x_data_gene_expression_scaler.gz",
      "help": "File name to save the gene expression scaler object.",
-     },
-    {"name": "md_scaler_fname",
-     "type": str,
-     "default": "x_data_mordred_scaler.gz",
-     "help": "File name to save the Mordred scaler object.",
-     },
+     }
 ]
 
+# [Req]
 preprocess_params = app_preproc_params + model_preproc_params
 
 
+# TO REMOVE
 def load_response_data(inpath_dict: frm.DataPathDict,
                        y_file_name: str,
                        source: str,
@@ -146,6 +141,7 @@ def load_response_data(inpath_dict: frm.DataPathDict,
     return df
 
 
+# TO REMOVE
 def compose_data_arrays(df_response, df_drug, df_cell, drug_col_name, canc_col_name):
     """ Returns drug and cancer feature data, and response values.
 
@@ -209,6 +205,8 @@ def compose_data_arrays(df_response, df_drug, df_cell, drug_col_name, canc_col_n
     df_cell = df_cell.reset_index()
 
     return np.asarray(xd).squeeze(), np.asarray(xc), np.asarray(y)
+
+# TO REMOVE
 
 
 def preprocess_drug_data(args, drug_data):
@@ -285,13 +283,18 @@ def build_common_data(params: Dict):
     :return: drug and cell dataframes and smiles graphs
     :rtype: pd.DataFrame
     """
-    # -------------------
-    # Load drug data
-    # -------------------
-    # Soft coded for smiles for now
+    # ------------------------------------------------------
+    # [Req] Build paths and create output dir
+    # ------------------------------------------------------
+    # Build paths for raw_data, x_data, y_data, splits
     params = frm.build_paths(params)
+
+    # Create output dir for model input data (to save preprocessed ML data)
     frm.create_outdir(outdir=params["ml_data_outdir"])
 
+    # ------------------------------------------------------
+    # [Req] Load X data (feature representations)
+    # ------------------------------------------------------
     omics_loader = drp.OmicsLoader(params)
     drugs_loader = drp.DrugsLoader(params)
 
@@ -303,7 +306,10 @@ def build_common_data(params: Dict):
     df_drug["SMILES"] = df_drug["smiles"]
     # breakpoint()
 
-    # Use landmark genes (gene selection)
+    # ------------------------------------------------------
+    # Further preprocess X data
+    # ------------------------------------------------------
+    # Gene selection (based on LINCS landmark genes)
     def gene_selection(df, genes_fpath, canc_col_name):
         """ Takes a dataframe omics data (e.g., gene expression) and retains only
         the genes specified in genes_fpath.
@@ -498,9 +504,10 @@ def build_stage_dependent_data(params: Dict,
     stages = {"train": params["train_split_file"],
               "val": params["val_split_file"],
               "test": params["test_split_file"]}
-    # -----------------------------
-    # Load y data according to stage
-    # ------------------------------
+    # --------------------------------
+    # [Req] Load response data
+    # --------------------------------
+    print(stages["test"])
     df_response = drp.DrugResponseLoader(params,
                                          split_file=stages[stage],
                                          verbose=False).dfs["response.tsv"]
@@ -541,12 +548,35 @@ def build_stage_dependent_data(params: Dict,
     # fname = f"{stage}_{params['y_data_suffix']}.csv"
     df_gene_expression = data[gene_expression_columns]
     df_drug = data[drug_columns]
-    out_path = os.path.join(params["ml_data_outdir"], f'{stage}.pickle')
+    out_path = os.path.join(params["ml_data_outdir"], f'{stage}.h5')
     print(out_path)
     df_output = {'drug': df_drug, 'gene_expression': df_gene_expression}
-    pickle.dump(df_output, open(out_path, 'wb'), protocol=4)
+    for key in df_output:
+        df_output[key].to_hdf(out_path, key)
+    # pickle.dump(df_output, open(out_path, 'wb'), protocol=4)
+
+    y_df = pd.DataFrame(
+        data[['Label', params['canc_col_name'], params['drug_col_name']]])
+    frm.save_stage_ydf(y_df, params, stage)
 
     return scaler
+
+
+def run(params):
+
+    df_drug, df_cell_all = build_common_data(params)
+    stages = ["train", "val", "test"]
+    scaler = None
+    for st in stages:
+        print(f"Building stage: {st}")
+        scaler = build_stage_dependent_data(params,
+                                            st,
+                                            df_drug,
+                                            df_cell_all,
+                                            scaler,
+                                            )
+
+    return
 
 
 def main(args):
@@ -562,17 +592,7 @@ def main(args):
     print("\nFinished data preprocessing.")
     # download_data(params)
 
-    df_drug, df_cell_all = build_common_data(params)
-    stages = ["train", "val", "test"]
-    scaler = None
-    for st in stages:
-        print(f"Building stage: {st}")
-        scaler = build_stage_dependent_data(params,
-                                            st,
-                                            df_drug,
-                                            df_cell_all,
-                                            scaler,
-                                            )
+    ml_data_outdir = run(params)
 
 
 # [Req]
