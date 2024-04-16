@@ -31,27 +31,24 @@ if [ $# -eq 2 ] ; then
 	CANDLE_DATA_DIR=$1 ; shift
 	CMD="python ${CANDLE_MODEL}"
 	echo "CMD = $CMD"
-elif [ $# -eq 3 ] ; then
-	CUDA_VISIBLE_DEVICES=$1 ; shift
-	CANDLE_DATA_DIR=$1 ; shift
-	CMD="python ${CANDLE_MODEL} --config_file $1"; shift
-	echo "CMD = $CMD"
+elif [ $# -ge 3 ] ; then
+        CUDA_VISIBLE_DEVICES=$1 ; shift
+        CANDLE_DATA_DIR=$1 ; shift
 
-else
-    CUDA_VISIBLE_DEVICES=$1 ; shift
-    CANDLE_DATA_DIR=$1 ; shift
-	CONFIG_PATH=${CANDLE_DATA_DIR}/$1
-	# if third arg is a file, then set --config_file
-	if [ -f "$CONFIG_PATH" ] ; then
-  		CANDLE_CONFIG=$1 ; shift
-  		CMD="python ${CANDLE_MODEL} --config_file $CONFIG_PATH $@"
-  		echo "CMD = $CMD $@"
+        # if $3 is a file, then set candle_config
+        if [ -f $CANDLE_DATA_DIR/$1 ] ; then
+		echo "$1 is a file"
+                CANDLE_CONFIG=$1 ; shift
+                CMD="python ${CANDLE_MODEL} --config_file $CANDLE_CONFIG $@"
+                echo "CMD = $CMD $@"
 
-	# else don't set --config_file
-	else
-		CMD="python ${CANDLE_MODEL} $@"
-		echo "CMD = $CMD"
-	fi
+        # else passthrough $@
+        else
+		echo "$1 is not a file"
+                CMD="python ${CANDLE_MODEL} $@"
+                echo "CMD = $CMD"
+
+        fi
 fi
 
 # Display runtime arguments
