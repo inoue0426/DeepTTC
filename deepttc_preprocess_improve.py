@@ -347,8 +347,11 @@ def _download_default_dataset(default_data_url):
                     f'--cut-dirs={url_length}', '--no-parent', f'--directory-prefix={OUT_DIR}', f'{url}'])
 
 
-def download_data(params):
+def download_model_data(params):
     _download_default_dataset(params["default_data_url"])
+
+
+def download_dataset(params):
     mainpath = Path(os.environ["IMPROVE_DATA_DIR"])
     command = f'wget --directory-prefix={mainpath} --cut-dirs=7 -nH -np -m ftp://ftp.mcs.anl.gov/pub/candle/public/improve/benchmarks/single_drug_drp/benchmark-data-pilot1/csa_data'
     tokens = command.split(' ')
@@ -590,7 +593,8 @@ def main(args):
     )
 
     print("\nFinished data preprocessing.")
-    # download_data(params)
+    download_model_data(params)
+    # download_dataset(params)
 
     ml_data_outdir = run(params)
 
