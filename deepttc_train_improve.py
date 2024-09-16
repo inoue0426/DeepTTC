@@ -1,13 +1,15 @@
 import os
 import json
-import candle
 # import pickle
 import pandas as pd
 from pathlib import Path
 from DeepTTC_candle import get_model
-from improve import framework as frm
-from improve.metrics import compute_metrics
+from improvelib.applications.drug_response_prediction.config import DRPTrainConfig
+from improvelib.utils import str2bool
+import improvelib.utils as frm
+from improvelib.metrics import compute_metrics
 from deepttc_preprocess_improve import preprocess_params
+from DeepTTC_candle import additional_definitions
 
 # 1. App-specific params (App: monotherapy drug response prediction)
 # Currently, there are no app-specific params for this script.
@@ -16,30 +18,10 @@ app_train_params = []
 # 2. Model-specific params (Model: GraphDRP)
 # All params in model_train_params are optional.
 # If no params are required by the model, then it should be an empty list.
-model_train_params = [
-    {"name": "model_arch",
-     "default": "GINConvNet",
-     "choices": ["GINConvNet", "GATNet", "GAT_GCN", "GCNNet"],
-     "type": str,
-     "help": "Model architecture to run."},
-    {"name": "log_interval",
-     "action": "store",
-     "type": int,
-     "help": "Interval for saving o/p"},
-    {"name": "cuda_name",
-     "action": "store",
-     "type": str,
-     "help": "Cuda device (e.g.: cuda:0, cuda:1."},
-    {"name": "learning_rate",
-     "type": float,
-     "default": 0.0001,
-     "help": "Learning rate for the optimizer."
-     },
-]
 
 # Combine the two lists (the combined parameter list will be passed to
 # frm.initialize_parameters() in the main().
-train_params = app_train_params + model_train_params
+train_params = app_train_params + additional_definitions
 
 metrics_list = ["mse", "rmse", "pcc", "scc", "r2"]
 
@@ -84,10 +66,9 @@ def run(params):
              specified metrics.
     :rtype: float list
     """
-    model_dir = Path(params["model_outdir"])
-    data_dir = Path(params["train_ml_data_dir"])
-    train_data_path = data_dir/'train.h5'
-    val_data_path = data_dir/'val.h5'
+    data_dir = Path(params["input_dir"])
+    train_data_path = data_dir/frm.build_ml_data_name(params, stage="val")
+    val_data_path = data_dir/frm.build_ml_data_name(params, stage="val")
     # test_data_path = model_dir/'test.h5'
 
     train_data = {}
@@ -99,19 +80,19 @@ def run(params):
     val_data['gene_expression'] = pd.read_hdf(
         val_data_path, key='gene_expression')
     # test_data = pickle.load(open(test_data_path, 'rb'))
-    args = candle.ArgumentStruct(**params)
-    modeldir = args.output_dir
-    modelfile = os.path.join(modeldir, args.model_name)
-    modelpath = frm.build_model_path(params, model_dir=params["model_outdir"])
+    modeldir = params['output_dir']
+    modelpath = frm.build_model_path(params,
+                                     model_dir=params["output_dir"])
+
     if not os.path.exists(modeldir):
         os.mkdir(modeldir)
-    model = get_model(args)
+    model = get_model(params)
     model = model.train(train_drug=train_data['drug'], train_rna=train_data['gene_expression'],
                         val_drug=val_data['drug'], val_rna=val_data['gene_expression'])
     print(f'Saving model to {modelpath}')
 
     ############### HACK!!!! ################
-    os.makedirs(str(modelpath).split('.')[0], exist_ok=True)
+    # os.makedirs(str(modelpath).split('.')[0], exist_ok=True)
     #########################################
     model.save_model(modelpath)
     # model.save_model(modelfile)
@@ -131,7 +112,7 @@ def run(params):
 
     df = pd.DataFrame({true_col_name: y_label, pred_col_name: y_pred})
     # Save preds df
-    opath = Path(params["model_outdir"])
+    opath = Path(params["output_dir"])
     os.makedirs(opath, exist_ok=True)
     # ------------------------------------------------------
     # [Req] Save raw predictions in dataframe
@@ -139,7 +120,7 @@ def run(params):
     frm.store_predictions_df(
         params,
         y_true=y_label, y_pred=y_pred, stage="val",
-        outdir=params["model_outdir"]
+        outdir=params["output_dir"]
     )
 
     # ------------------------------------------------------
@@ -148,7 +129,7 @@ def run(params):
     val_scores = frm.compute_performace_scores(
         params,
         y_true=y_label, y_pred=y_pred, stage="val",
-        outdir=params["model_outdir"], metrics=metrics_list
+        outdir=params["output_dir"], metrics=metrics_list
     )
 
     return val_scores
@@ -156,9 +137,12 @@ def run(params):
 
 def main():
     filepath = Path(__file__).resolve().parent
-    additional_definitions = preprocess_params + train_params
-    params = frm.initialize_parameters(filepath,
-                                       default_model="DeepTTC.default",
+
+    additional_definitions = preprocess_params + \
+        train_params
+    cfg = DRPTrainConfig()
+    params = cfg.initialize_parameters(pathToModelDir=filepath,
+                                       default_config="deepttc_params.txt",
                                        additional_definitions=additional_definitions
                                        )
     run(params)

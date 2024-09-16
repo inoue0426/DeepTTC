@@ -26,7 +26,9 @@ import torch
 import pandas as pd
 
 # [Req] IMPROVE/CANDLE imports
-from improve import framework as frm
+from improvelib.applications.drug_response_prediction.config import DRPInferConfig
+from improvelib.utils import str2bool
+import improvelib.utils as frm
 from DeepTTC_candle import *
 
 # [Req] Imports from preprocess and train scripts
@@ -77,7 +79,7 @@ def run(params):
     # ------------------------------------------------------
     # [Req] Create output dir
     # ------------------------------------------------------
-    frm.create_outdir(outdir=params["infer_outdir"])
+    frm.create_outdir(outdir=params["output_dir"])
 
     # ------------------------------------------------------
     # [Req] Create data names for test set
@@ -88,13 +90,14 @@ def run(params):
     # Prepare dataloaders to load model input data (ML data)
     # ------------------------------------------------------
     print("\nTest data:")
-    print(f"test_ml_data_dir: {params['test_ml_data_dir']}")
+    print(f"test_ml_data_dir: {params['input_data_dir']}")
     # print(f"test_batch: {params['test_batch']}")
 
     print(test_data_fname)
-    test_ml_data_dir = params['test_ml_data_dir']
+    test_ml_data_dir = params['input_data_dir']
     # params['test_data_processed']
-    test_data_path = f'{test_ml_data_dir}/test.h5'
+    test_file_name = frm.build_ml_data_name(params, stage="test")
+    test_data_path = f'{test_ml_data_dir}/{test_file_name}'
     test_data = {}
     test_data['drug'] = pd.read_hdf(test_data_path, key='drug')
     test_data['gene_expression'] = pd.read_hdf(
@@ -104,8 +107,8 @@ def run(params):
     # Load best model and compute predictions
     # ------------------------------------------------------
     # Load the best saved model (as determined based on val data)
-    modelpath = frm.build_model_path(
-        params, model_dir=params["model_dir"])  # [Req]
+    modelpath = modelpath = frm.build_model_path(
+        params, model_dir=params["input_model_dir"])  # [Req]
 
     def determine_device(cuda_name_from_params):
         """Determine device to run PyTorch functions.
@@ -138,11 +141,11 @@ def run(params):
 
         return device
 
-    device = determine_device(params["cuda_name"])
+    # device = determine_device(params["cuda_name"])
     if modelpath.exists() == False:
         raise Exception(f"ERROR ! modelpath not found {modelpath}\n")
 
-    args = candle.ArgumentStruct(**params)
+    args = params  # candle.ArgumentStruct(**params)
     print(modelpath)
     model = DeepTTC(modeldir=modelpath, args=args)
     model.load_pretrained(modelpath)
@@ -156,7 +159,7 @@ def run(params):
     frm.store_predictions_df(
         params,
         y_true=y_label, y_pred=y_pred, stage="test",
-        outdir=params["infer_outdir"]
+        outdir=params["output_dir"]
     )
 
     # ------------------------------------------------------
@@ -165,7 +168,7 @@ def run(params):
     test_scores = frm.compute_performace_scores(
         params,
         y_true=y_label, y_pred=y_pred, stage="test",
-        outdir=params["infer_outdir"], metrics=metrics_list
+        outdir=params["output_dir"], metrics=metrics_list
     )
 
     return test_scores
@@ -175,15 +178,11 @@ def run(params):
 def main(args):
     # [Req]
     additional_definitions = preprocess_params + infer_params + train_params
-    params = frm.initialize_parameters(
-        filepath,
-        # default_model="graphdrp_default_model.txt",
-        # default_model="graphdrp_params.txt",
-        # default_model="params_ws.txt",
-        default_model="DeepTTC.default",
-        additional_definitions=additional_definitions,
-        # required=req_infer_args,
-        required=None,
+    cfg = DRPInferConfig()
+    params = cfg.initialize_parameters(
+        pathToModelDir=filepath,
+        default_config="deepttc_params.txt",
+        additional_definitions=additional_definitions
     )
     test_scores = run(params)
     print("\nFinished model inference.")

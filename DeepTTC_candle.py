@@ -13,122 +13,158 @@ additional_definitions = [
     {
         "name": "save_data",
         "type": bool,
+        "default": False, 
         "help": "Whether to save loaded data in pickle files",
     },
     {
         "name": "use_lincs",
         "type": bool,
+        "default": False,
         "help": "Whether to use a LINCS subset of genes ONLY",
     },
     {
         "name": "benchmark_dir",
         "type": str,
+        "default": None,
         "help": "Directory with the input data for benchmarking",
     },
     {
         "name": "benchmark_result_dir",
         "type": str,
+        "default": None,
         "help": "Directory for benchmark output",
     },
     {
         "name": "generate_input_data",
         "type": bool,
+        "default": None,
         "help": "'True' for generating input data anew, 'False' for using stored data",
     },
     {
         "name": "mode",
         "type": str,
+        "default": None,
         "help": "Execution mode. Available modes are: 'run', 'benchmark'",
     },
     {
         "name": "cancer_id",
         "type": str,
+        "default": None,
         "help": "Column name for cancer",
     },
     {
         "name": "drug_id",
         "type": str,
+        "default": None,
         "help": "Column name for drug",
     },
     {
         "name": "sample_id",
         "type": str,
+        "default": None,
         "help": "Column name for samples/cell lines",
     },
     {
         "name": "target_id",
         "type": str,
+        "default": None,
         "help": "Column name for target",
     },
     {
         "name": "train_data_drug",
         "type": str,
+        "default": None,
         "help": "Drug data for training",
     },
     {
         "name": "test_data_drug",
         "type": str,
+        "default": None,
         "help": "Drug data for testing",
     },
     {
         "name": "train_data_rna",
         "type": str,
+        "default": None,
         "help": "RNA data for training",
     },
     {
         "name": "test_data_rna",
         "type": str,
+        "default": None,
         "help": "RNA data for testing",
     },
     {
         "name": "vocab_dir",
         "type": str,
+        "default": None,
         "help": "Directory with ESPF vocabulary",
     },
     {
         "name": "transformer_num_attention_heads_drug",
         "type": int,
+        "default": None,
         "help": "number of attention heads for drug transformer",
     },
     {
         "name": "input_dim_drug",
         "type": int,
+        "default": None,
         "help": "Input size of the drug transformer",
     },
     {
         "name": "transformer_emb_size_drug",
         "type": int,
+        "default": None,
         "help": "Size of the drug embeddings",
     },
     {
         "name": "transformer_n_layer_drug",
         "type": int,
+        "default": None,
         "help": "Number of layers for drug transformer",
     },
     {
         "name": "transformer_intermediate_size_drug",
         "type": int,
+        "default": None,
         "help": "Intermediate size of the drug layers",
     },
     {
         "name": "transformer_attention_probs_dropout",
-        "type": int,
+        "type": float,
+        "default": None,
         "help": "number of layers for drug transformer",
     },
     {
         "name": "transformer_hidden_dropout_rate",
-        "type": int,
+        "type": float,
+        "default": None,
         "help": "dropout rate for transformer hidden layers",
+    },
+    {
+        "name": "dropout",
+        "type": float,
+        "default": None,
+        "help": "dropout rate for common part",
     },
     {
         "name": "input_dim_drug_classifier",
         "type": int,
-        "help": "dropout rate for classifier hidden layers",
+        "default": None,
+        "help": "input dimensions for drug classifier",
     },
     {
         "name": "input_dim_gene_classifier",
         "type": int,
-        "help": "dropout rate for classifier hidden layers",
+        "default": None,
+        "help": "input dimensions for gene classifier",
+    },
+    {
+        "name": "gene_dim",
+        "type": int,
+        "default": None,
+        "help": "Dimensions of the input gene expression data",
     },
 ]
 
@@ -148,9 +184,10 @@ class DataLoader:
 
     def __init__(self, args):
         self.args = args
-    
+
     def load_data(self):
-        train_drug, test_drug, train_rna, test_rna = self._process_data(self.args)
+        train_drug, test_drug, train_rna, test_rna = self._process_data(
+            self.args)
         return train_drug, test_drug, train_rna, test_rna
 
     def save_data(self, train_drug, test_drug, train_rna, test_rna):
@@ -170,14 +207,14 @@ class DataLoader:
         # this evaluates to /candle_data_dir/GDSC_data
         # print ('outdir before: {}'.format(OUT_DIR))
         OUT_DIR = self.args.data_dir
-        print ('outdir after: {}'.format(OUT_DIR))
+        print('outdir after: {}'.format(OUT_DIR))
         # print("IN _download_default_dataset")
 
         url_length = len(url.split('/'))-4
         if not os.path.isdir(OUT_DIR):
             os.mkdir(OUT_DIR)
         subprocess.run(['wget', '--recursive', '--no-clobber', '-nH',
-                   f'--cut-dirs={url_length}', '--no-parent', f'--directory-prefix={OUT_DIR}', f'{url}'])
+                        f'--cut-dirs={url_length}', '--no-parent', f'--directory-prefix={OUT_DIR}', f'{url}'])
         # wget.download(url, out=OUT_DIR)
 
     def _process_data(self, args):
@@ -189,11 +226,12 @@ class DataLoader:
 
             self._download_default_dataset(args.default_data_url)
 
-            #obj = DataEncoding(args.vocab_dir, args.cancer_id,
+            # obj = DataEncoding(args.vocab_dir, args.cancer_id,
             #                   args.sample_id, args.target_id, args.drug_id)
             obj = DataEncoding(args.data_dir, args.cancer_id,
-                    args.sample_id, args.target_id, args.drug_id)
-            train_drug, test_drug = obj.Getdata.ByCancer(random_seed=args.rng_seed)
+                               args.sample_id, args.target_id, args.drug_id)
+            train_drug, test_drug = obj.Getdata.ByCancer(
+                random_seed=args.rng_seed)
 
             train_drug, train_rna, test_drug, test_rna = obj.encode(
                 traindata=train_drug,
@@ -241,7 +279,7 @@ def initialize_parameters(default_model='DeepTTC.default'):
 
 
 def get_model(args):
-    net = DeepTTC(modeldir=args.output_dir, args=args)
+    net = DeepTTC(modeldir=args['output_dir'], args=args)
     return net
 
 

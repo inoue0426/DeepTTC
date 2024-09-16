@@ -1,0 +1,71 @@
+[Global_Params]
+model_name = DeepTTC
+cancer_id = improve_sample_id
+drug_id = improve_chem_id
+target_id = auc
+sample_id = COSMIC_ID
+save_data = True
+predictions_output = output/results.tsv
+default_data_url = https://ftp.mcs.anl.gov/pub/candle/public/improve/reproducability/DeepTTC/
+benchmark_dir = ../IMP_data
+
+[Preprocess]
+train_split_file = CCLE_split_0_train.txt
+val_split_file = CCLE_split_0_val.txt
+test_split_file = CCLE_split_0_test.txt
+data_format = .h5
+y_data_files = [["response.tsv"]]
+x_data_canc_files = [["cancer_gene_expression.tsv", ["Gene_Symbol"]]]
+x_data_drug_files = [["drug_SMILES.tsv"]]
+use_lincs = True
+scaling = std
+output_dir = ./ml_data
+
+[Train]
+input_dir = ./ml_data
+output_dir = ./ml_data
+data_format = .h5
+model_file_name = model
+model_file_format = .pt
+epochs = 3
+batch_size = 64
+val_batch = 256
+loss = mse
+early_stop_metric = mse
+patience = 20
+ckpt_save_interval = 5
+log_interval = 20
+cuda_name = cuda:0
+rng_seed=1
+input_dim_drug = 2586
+transformer_emb_size_drug = 128
+dropout = 0.1
+transformer_n_layer_drug = 8
+transformer_intermediate_size_drug = 512
+transformer_num_attention_heads_drug = 8
+transformer_attention_probs_dropout = 0.1
+transformer_hidden_dropout_rate = 0.1
+learning_rate = 1e-5
+gene_dim = 958
+input_dim_drug_classifier = 128
+input_dim_gene_classifier = 256
+
+[Infer]
+input_data_dir = ./ml_data
+output_dir = ./ml_data
+data_format = .h5
+test_batch = 256
+input_model_dir = ./ml_data
+cuda_name = cuda:0
+input_dim_drug = 2586
+transformer_emb_size_drug = 128
+dropout = 0.1
+transformer_n_layer_drug = 8
+transformer_intermediate_size_drug = 512
+transformer_num_attention_heads_drug = 8
+transformer_attention_probs_dropout = 0.1
+transformer_hidden_dropout_rate = 0.1
+learning_rate = 1e-5
+gene_dim = 958
+input_dim_drug_classifier = 128
+input_dim_gene_classifier = 256

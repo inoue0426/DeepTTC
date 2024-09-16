@@ -122,11 +122,11 @@ class MLP(nn.Sequential):
 class Classifier(nn.Sequential):
     def __init__(self, args, model_drug, model_gene):
         super(Classifier, self).__init__()
-        self.input_dim_drug = args.input_dim_drug_classifier
-        self.input_dim_gene = args.input_dim_gene_classifier
+        self.input_dim_drug = args['input_dim_drug_classifier']
+        self.input_dim_gene = args['input_dim_gene_classifier']
         self.model_drug = model_drug
         self.model_gene = model_gene
-        self.dropout = nn.Dropout(args.dropout)
+        self.dropout = nn.Dropout(args['dropout'])
         self.hidden_dims = [1024, 1024, 512]
         layer_size = len(self.hidden_dims) + 1
         dims = [self.input_dim_drug + self.input_dim_gene] + \
@@ -157,21 +157,21 @@ class DeepTTC:
         self.device = torch.device(
             f'cuda:{devices_list}' if torch.cuda.is_available() else 'cpu')
 
-        self.model_drug = transformer(args.input_dim_drug,
-                                      args.transformer_emb_size_drug,
-                                      args.dropout,
-                                      args.transformer_n_layer_drug,
-                                      args.transformer_intermediate_size_drug,
-                                      args.transformer_num_attention_heads_drug,
-                                      args.transformer_attention_probs_dropout,
-                                      args.transformer_hidden_dropout_rate,
+        self.model_drug = transformer(args['input_dim_drug'],
+                                      args['transformer_emb_size_drug'],
+                                      args['dropout'],
+                                      args['transformer_n_layer_drug'],
+                                      args['transformer_intermediate_size_drug'],
+                                      args['transformer_num_attention_heads_drug'],
+                                      args['transformer_attention_probs_dropout'],
+                                      args['transformer_hidden_dropout_rate'],
                                       device=self.device)
         self.modeldir = modeldir
         self.record_file = os.path.join(
             self.modeldir, "valid_markdowntable.txt")
         self.pkl_file = os.path.join(self.modeldir, "loss_curve_iter.pkl")
         self.args = args
-        model_gene = MLP(input_dim=self.args.gene_dim, device=self.device)
+        model_gene = MLP(input_dim=self.args['gene_dim'], device=self.device)
         self.model = Classifier(self.args, self.model_drug, model_gene)
         # self.model = None
 
@@ -205,10 +205,10 @@ class DeepTTC:
 
     def train(self, train_drug, train_rna, val_drug, val_rna):
 
-        lr = self.args.learning_rate
+        lr = self.args['learning_rate']
         decay = 0
-        BATCH_SIZE = self.args.batch_size
-        train_epoch = self.args.epochs
+        BATCH_SIZE = self.args['batch_size']
+        train_epoch = self.args['epochs']
         self.model = self.model.to(self.device)
         # self.model = torch.nn.DataParallel(self.model, device_ids=[0, 5])
         opt = torch.optim.Adam(self.model.parameters(),
@@ -383,8 +383,8 @@ class DeepTTC:
 
     def preprocess(self, rna_data, drug_data, response_data, response_metric='AUC'):
         args = self.args
-        obj = DataEncoding(args.vocab_dir, args.cancer_id,
-                           args.sample_id, args.target_id, args.drug_id)
+        obj = DataEncoding(args['vocab_dir'], args['cancer_id'],
+                           args['sample_id'], args['target_id'], args['drug_id'])
         drug_smiles = drug_data
 
         drugid2smile = dict(
