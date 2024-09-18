@@ -569,7 +569,8 @@ class GetData():
 
         if args is not None:
             if args["use_lincs"]:
-                with open(f"{args.candle_data_dir}/landmark_genes") as f:
+                data_dir = args['improve_data_dir']
+                with open(f"{data_dir}/landmark_genes") as f:
                     genes = [str(line.rstrip()) for line in f]
                 # genes = ["ge_" + str(g) for g in genes]
                 print('Genes!!!')
