@@ -8,8 +8,7 @@ from improvelib.applications.drug_response_prediction.config import DRPTrainConf
 from improvelib.utils import str2bool
 import improvelib.utils as frm
 from improvelib.metrics import compute_metrics
-from deepttc_preprocess_improve import preprocess_params
-from DeepTTC_candle import additional_definitions
+from model_params_def import preprocess_params, additional_definitions
 
 # 1. App-specific params (App: monotherapy drug response prediction)
 # Currently, there are no app-specific params for this script.
@@ -67,8 +66,10 @@ def run(params):
     :rtype: float list
     """
     data_dir = Path(params["input_dir"])
-    train_data_path = data_dir/frm.build_ml_data_name(params, stage="val")
-    val_data_path = data_dir/frm.build_ml_data_name(params, stage="val")
+    train_data_path = data_dir / \
+        frm.build_ml_data_file_name(params['data_format'], stage="val")
+    val_data_path = data_dir / \
+        frm.build_ml_data_file_name(params['data_format'], stage="val")
     # test_data_path = model_dir/'test.h5'
 
     train_data = {}
@@ -81,7 +82,8 @@ def run(params):
         val_data_path, key='gene_expression')
     # test_data = pickle.load(open(test_data_path, 'rb'))
     modeldir = params['output_dir']
-    modelpath = frm.build_model_path(params,
+    modelpath = frm.build_model_path(model_file_name=params["model_file_name"],
+                                     model_file_format=params["model_file_format"],
                                      model_dir=params["output_dir"])
 
     if not os.path.exists(modeldir):
@@ -107,10 +109,10 @@ def run(params):
     # Otherwise, only a partial data frame is stored (with val_true and val_pred)
     # and y_true is equal to pytorch loaded val_true
     # This includes true and predicted values
-    pred_col_name = params["y_col_name"] + params["pred_col_name_suffix"]
-    true_col_name = params["y_col_name"] + "_true"
+    # pred_col_name = params["y_col_name"] + params["pred_col_name_suffix"]
+    # true_col_name = params["y_col_name"] + "_true"
+    # df = pd.DataFrame({true_col_name: y_label, pred_col_name: y_pred})
 
-    df = pd.DataFrame({true_col_name: y_label, pred_col_name: y_pred})
     # Save preds df
     opath = Path(params["output_dir"])
     os.makedirs(opath, exist_ok=True)
@@ -118,18 +120,22 @@ def run(params):
     # [Req] Save raw predictions in dataframe
     # ------------------------------------------------------
     frm.store_predictions_df(
-        params,
-        y_true=y_label, y_pred=y_pred, stage="val",
-        outdir=params["output_dir"]
+        y_true=y_label,
+        y_pred=y_pred,
+        stage="val",
+        y_col_name=params["y_col_name"],
+        output_dir=params["output_dir"]
     )
 
     # ------------------------------------------------------
     # [Req] Compute performance scores
     # ------------------------------------------------------
-    val_scores = frm.compute_performace_scores(
-        params,
-        y_true=y_label, y_pred=y_pred, stage="val",
-        outdir=params["output_dir"], metrics=metrics_list
+    val_scores = frm.compute_performance_scores(
+        y_true=y_label,
+        y_pred=y_pred,
+        stage="val",
+        output_dir=params["output_dir"],
+        metric_type=params["metric_type"]
     )
 
     return val_scores

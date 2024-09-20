@@ -6,14 +6,45 @@ import subprocess
 from Step3_model import *
 from Step2_DataEncoding import DataEncoding
 from cross_study_validation import run_cross_study_analysis
+from model_params_def import preprocess_params, additional_definitions
 
 file_path = os.path.dirname(os.path.realpath(__file__))
+
+
+preprocess_params = [
+    {"name": "use_lincs",
+     "type": bool,
+     "default": True,
+     "help": "Flag to indicate if landmark genes are used for gene selection.",
+     },
+    {"name": "scaling",
+     "type": str,
+     "default": "std",
+     "choice": ["std", "minmax", "miabs", "robust"],
+     "help": "Scaler for gene expression and Mordred descriptors data.",
+     },
+    {"name": "ge_scaler_fname",
+     "type": str,
+     "default": "x_data_gene_expression_scaler.gz",
+     "help": "File name to save the gene expression scaler object.",
+     },
+    {"name": "default_data_url",
+     "type": str,
+     "default": "'https://ftp.mcs.anl.gov/pub/candle/public/improve/reproducability/DeepTTC/'",
+     "help": "Link to model-specific data",
+     },
+    {"name": "sample_col_name",
+     "type": str,
+     "default": "COSMIC_ID",
+     "help": "ID format of the samples",
+     },
+]
 
 additional_definitions = [
     {
         "name": "save_data",
         "type": bool,
-        "default": False, 
+        "default": False,
         "help": "Whether to save loaded data in pickle files",
     },
     {
@@ -210,7 +241,7 @@ class DataLoader:
         print('outdir after: {}'.format(OUT_DIR))
         # print("IN _download_default_dataset")
 
-        url_length = len(url.split('/'))-4
+        url_length = len(url.split('/'))-3
         if not os.path.isdir(OUT_DIR):
             os.mkdir(OUT_DIR)
         subprocess.run(['wget', '--recursive', '--no-clobber', '-nH',

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-""" Inference with GraphDRP for drug response prediction.
+""" Inference with DeepTTC for drug response prediction.
 
 Required outputs
 ----------------
@@ -37,31 +37,6 @@ from deepttc_train_improve import metrics_list, train_params
 
 filepath = Path(__file__).resolve().parent  # [Req]
 
-# ---------------------
-# [Req] Parameter lists
-# ---------------------
-# Two parameter lists are required:
-# 1. app_infer_params
-# 2. model_infer_params
-#
-# The values for the parameters in both lists should be specified in a
-# parameter file that is passed as default_model arg in
-# frm.initialize_parameters().
-
-# 1. App-specific params (App: monotherapy drug response prediction)
-# Currently, there are no app-specific params in this script.
-app_infer_params = []
-
-# 2. Model-specific params (Model: GraphDRP)
-# All params in model_infer_params are optional.
-# If no params are required by the model, then it should be an empty list.
-model_infer_params = []
-
-# [Req] Combine the two lists (the combined parameter list will be passed to
-# frm.initialize_parameters() in the main().
-infer_params = app_infer_params + model_infer_params
-# ---------------------
-
 
 # [Req]
 def run(params):
@@ -84,7 +59,8 @@ def run(params):
     # ------------------------------------------------------
     # [Req] Create data names for test set
     # ------------------------------------------------------
-    test_data_fname = frm.build_ml_data_name(params, stage="test")
+    test_data_fname = frm.build_ml_data_file_name(
+        params['data_format'], stage="test")
 
     # ------------------------------------------------------
     # Prepare dataloaders to load model input data (ML data)
@@ -96,7 +72,8 @@ def run(params):
     print(test_data_fname)
     test_ml_data_dir = params['input_data_dir']
     # params['test_data_processed']
-    test_file_name = frm.build_ml_data_name(params, stage="test")
+    test_file_name = frm.build_ml_data_file_name(
+        params['data_format'], stage="test")
     test_data_path = f'{test_ml_data_dir}/{test_file_name}'
     test_data = {}
     test_data['drug'] = pd.read_hdf(test_data_path, key='drug')
@@ -107,8 +84,9 @@ def run(params):
     # Load best model and compute predictions
     # ------------------------------------------------------
     # Load the best saved model (as determined based on val data)
-    modelpath = modelpath = frm.build_model_path(
-        params, model_dir=params["input_model_dir"])  # [Req]
+    modelpath = modelpath = frm.build_model_path(model_file_name=params["model_file_name"],
+                                                 model_file_format=params["model_file_format"],
+                                                 model_dir=params["output_dir"])
 
     def determine_device(cuda_name_from_params):
         """Determine device to run PyTorch functions.
@@ -157,18 +135,22 @@ def run(params):
     # [Req] Save raw predictions in dataframe
     # ------------------------------------------------------
     frm.store_predictions_df(
-        params,
-        y_true=y_label, y_pred=y_pred, stage="test",
-        outdir=params["output_dir"]
+        y_true=y_label,
+        y_pred=y_pred,
+        stage="val",
+        y_col_name=params["y_col_name"],
+        output_dir=params["output_dir"]
     )
 
     # ------------------------------------------------------
     # [Req] Compute performance scores
     # ------------------------------------------------------
-    test_scores = frm.compute_performace_scores(
-        params,
-        y_true=y_label, y_pred=y_pred, stage="test",
-        outdir=params["output_dir"], metrics=metrics_list
+    test_scores = frm.compute_performance_scores(
+        y_true=y_label,
+        y_pred=y_pred,
+        stage="val",
+        output_dir=params["output_dir"],
+        metric_type=params["metric_type"]
     )
 
     return test_scores
@@ -177,7 +159,7 @@ def run(params):
 # [Req]
 def main(args):
     # [Req]
-    additional_definitions = preprocess_params + infer_params + train_params
+    additional_definitions = preprocess_params + train_params
     cfg = DRPInferConfig()
     params = cfg.initialize_parameters(
         pathToModelDir=filepath,
