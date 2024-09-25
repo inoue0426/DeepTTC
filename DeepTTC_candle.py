@@ -1,7 +1,6 @@
 import os
 import wget
 import torch
-import candle
 import subprocess
 from Step3_model import *
 from Step2_DataEncoding import DataEncoding
@@ -202,12 +201,12 @@ additional_definitions = [
 required = None
 
 
-class DeepTTCCandle(candle.Benchmark):
-    def set_locals(self):
-        if required is not None:
-            self.required = set(required)
-        if additional_definitions is not None:
-            self.additional_definitions = additional_definitions
+# class DeepTTCCandle(candle.Benchmark):
+#    def set_locals(self):
+#        if required is not None:
+#            self.required = set(required)
+#        if additional_definitions is not None:
+#            self.additional_definitions = additional_definitions
 
 
 class DataLoader:
@@ -282,6 +281,7 @@ class DataLoader:
         return train_drug, test_drug, train_rna, test_rna
 
 
+a = """
 def initialize_parameters(default_model='DeepTTC.default'):
     # Build benchmark object
     common = DeepTTCCandle(file_path,
@@ -307,6 +307,7 @@ def initialize_parameters(default_model='DeepTTC.default'):
             os.makedirs(path)
 
     return gParameters
+"""
 
 
 def get_model(args):
@@ -335,16 +336,9 @@ def benchmark(args):
 
 
 def main():
-    gParameters = initialize_parameters()
-    args = candle.ArgumentStruct(**gParameters)
-    print(args)
-
-    if args.mode == 'run':
-        run(args)
-    elif args.mode == 'benchmark':
-        benchmark(args)
-    else:
-        raise Exception('Unknown mode. Please check configuration file')
+    # gParameters = initialize_parameters()
+    # args = candle.ArgumentStruct(**gParameters)
+    pass
 
 
 if __name__ == "__main__":

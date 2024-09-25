@@ -32,7 +32,6 @@ from prettytable import PrettyTable
 from subword_nmt.apply_bpe import BPE
 from model_helper import Encoder_MultipleLayers, Embeddings
 from Step2_DataEncoding import DataEncoding
-import candle
 from sklearn.metrics import r2_score
 
 

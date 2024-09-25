@@ -66,7 +66,7 @@ preprocess_params = model_preproc_params
 
 
 def preprocess(args, rna_data, drug_data, response_data, response_metric='AUC'):
-    args["vocab_dir"] = os.path.join(IMPROVE_DATA_DIR, 'DeepTTC')
+    args["vocab_dir"] = '.'  # os.path.join(IMPROVE_DATA_DIR, 'DeepTTC')
     obj = DataEncoding(args, args["vocab_dir"], args["canc_col_name"],
                        args["sample_col_name"], args["y_col_name"], args["drug_col_name"])
     drug_smiles = drug_data
@@ -166,19 +166,28 @@ def build_common_data(params: Dict):
 
 def _download_default_dataset(default_data_url):
     url = default_data_url
-    improve_data_dir = os.getenv("IMPROVE_DATA_DIR")
+    improve_data_dir = '.'  # os.getenv("IMPROVE_DATA_DIR")
     if improve_data_dir is None:
         improve_data_dir = '.'
 
     OUT_DIR = improve_data_dir
     print('outdir after: {}'.format(OUT_DIR))
 
-    url_length = len(url.split('/'))-3
+    url_length = len(url.split('/'))-5
     if not os.path.isdir(OUT_DIR):
         os.mkdir(OUT_DIR)
     url = url.strip('\'')
-    subprocess.run(['wget', '--recursive', '--no-clobber', '-nH',
-                    f'--cut-dirs={url_length}', '--no-parent', f'--directory-prefix={OUT_DIR}', f'{url}'])
+    try:
+        subprocess.run(['rm', '*index*'])
+    except:
+        pass
+    command = ['wget', '--recursive', '--no-clobber', '-nH',
+               f'--cut-dirs={url_length}', '--no-parent', f'--directory-prefix={OUT_DIR}', f'{url}']
+    subprocess.run(command)
+    try:
+        subprocess.run(['rm', '*index*'])
+    except:
+        pass
 
 
 def download_model_data(params):
@@ -388,8 +397,8 @@ def build_stage_dependent_data(params: Dict,
     # fname = f"{stage}_{params['y_data_suffix']}.csv"
     df_gene_expression = data[gene_expression_columns]
     df_drug = data[drug_columns]
-    out_path = os.path.join(params["output_dir"], frm.build_ml_data_name(
-        params, stage=stage))  # f'{stage}_data.h5')
+    out_path = os.path.join(params["output_dir"], frm.build_ml_data_file_name(
+        params["data_format"], stage=stage))  # f'{stage}_data.h5')
     print(out_path)
     df_output = {'drug': df_drug, 'gene_expression': df_gene_expression}
     for key in df_output:
@@ -399,7 +408,7 @@ def build_stage_dependent_data(params: Dict,
     data[params['y_col_name']] = data['Label']
     y_df = pd.DataFrame(
         data[['Label', params['y_col_name'], params['canc_col_name'], params['drug_col_name']]])
-    frm.save_stage_ydf(y_df, params, stage)
+    frm.save_stage_ydf(y_df, stage, params['output_dir'])
 
     return scaler
 

@@ -21,10 +21,10 @@ class DataEncoding:
         self.Getdata = GetData(args, cancer_id, sample_id, target_id, drug_id)
 
     def _drug2emb_encoder(self, smile):
-        vocab_path = "{}/ESPF/drug_codes_chembl_freq_1500.txt".format(
+        vocab_path = "{}/DeepTTC/ESPF/drug_codes_chembl_freq_1500.txt".format(  # "{}/ESPF/drug_codes_chembl_freq_1500.txt".format(
             self.vocab_dir)
         sub_csv = pd.read_csv(
-            "{}/ESPF/subword_units_map_chembl_freq_1500.csv".format(self.vocab_dir))
+            "{}/DeepTTC/ESPF/subword_units_map_chembl_freq_1500.csv".format(self.vocab_dir))
 
         bpe_codes_drug = codecs.open(vocab_path)
         dbpe = BPE(bpe_codes_drug, merges=-1, separator='')

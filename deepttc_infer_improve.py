@@ -137,7 +137,7 @@ def run(params):
     frm.store_predictions_df(
         y_true=y_label,
         y_pred=y_pred,
-        stage="val",
+        stage="test",
         y_col_name=params["y_col_name"],
         output_dir=params["output_dir"]
     )
@@ -148,7 +148,7 @@ def run(params):
     test_scores = frm.compute_performance_scores(
         y_true=y_label,
         y_pred=y_pred,
-        stage="val",
+        stage="test",
         output_dir=params["output_dir"],
         metric_type=params["metric_type"]
     )
