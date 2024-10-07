@@ -10,14 +10,13 @@ A more detailed tutorial can be found [here](https://jdacs4c-improve.github.io/d
 ## Dependencies
 Installation instuctions are detialed below in [Step-by-step instructions](#step-by-step-instructions).
 
-Conda `yml` file [conda_env_py37.sh](./conda_env_py37.sh)
+Conda `yml` file `environment_no_candle.yml`
 
 ML framework:
 + [Torch](https://pytorch.org/) -- deep learning framework for building the prediction model
 
 IMPROVE dependencies:
 + [IMPROVE v0.0.3-beta](https://github.com/JDACS4C-IMPROVE/IMPROVE/tree/v0.0.3-beta)
-+ [candle_lib](https://github.com/ECP-CANDLE/candle_lib) - IMPROVE dependency (enables various hyperparameter optimization on HPC machines) `TODO`: need to fork into IMPROVE project and tag
 
 
 
@@ -78,9 +77,9 @@ git checkout v0.0.3-beta
 ```
 
 
-### 2. Set computational environment
+### 2. Additional dependencies
 
-Check [conda_env_py37.sh](./conda_env_py37.sh)
+Run `python3 -m pip install -r requirements.txt`
 
 
 ### 3. Run `setup_improve.sh`.
