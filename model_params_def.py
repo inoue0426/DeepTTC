@@ -27,7 +27,7 @@ preprocess_params = [
      },
 ]
 
-additional_definitions = [
+train_params = [
     {
         "name": "save_data",
         "type": bool,
@@ -185,3 +185,5 @@ additional_definitions = [
         "help": "Dimensions of the input gene expression data",
     },
 ]
+
+test_params = []

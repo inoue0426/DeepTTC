@@ -8,7 +8,7 @@ from improvelib.applications.drug_response_prediction.config import DRPTrainConf
 from improvelib.utils import str2bool
 import improvelib.utils as frm
 from improvelib.metrics import compute_metrics
-from model_params_def import preprocess_params, additional_definitions
+from model_params_def import preprocess_params, train_params
 
 # 1. App-specific params (App: monotherapy drug response prediction)
 # Currently, there are no app-specific params for this script.
@@ -20,7 +20,7 @@ app_train_params = []
 
 # Combine the two lists (the combined parameter list will be passed to
 # frm.initialize_parameters() in the main().
-train_params = app_train_params + additional_definitions
+train_params = app_train_params + train_params
 
 metrics_list = ["mse", "rmse", "pcc", "scc", "r2"]
 

@@ -5,7 +5,7 @@ import subprocess
 from Step3_model import *
 from Step2_DataEncoding import DataEncoding
 from cross_study_validation import run_cross_study_analysis
-from model_params_def import preprocess_params, additional_definitions
+from model_params_def import preprocess_params, train_params
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 

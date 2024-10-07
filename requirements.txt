@@ -1,6 +1,7 @@
 tables
 torch
 tensorflow
+keras
 pyarrow
 h5py
 pandas
